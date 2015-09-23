@@ -24,9 +24,12 @@ int getCmd(char *buf, int buf_size) {
 }
 
 int parseCmd(char *buf, char **args, int *args_count) {
+    int N = strlen(buf);
+    if (N > MAX_LINE) {
+        printf("Input is too long.");
+    }
     int buf_p = 0;
     int arg_p = 0;
-    int N = strlen(buf);
     while (buf_p < N) {
         while (isWhitespace(buf[buf_p])) {
             buf_p++;
