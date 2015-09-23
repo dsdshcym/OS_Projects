@@ -31,20 +31,18 @@ int parseCmd(char *buf, char **args, int *args_count) {
     int buf_p = 0;
     int arg_p = 0;
     while (buf_p < N) {
-        while (isWhitespace(buf[buf_p])) {
+        while ( (buf_p < N) && (isWhitespace(buf[buf_p])) ) {
+            buf[buf_p] = '\0';
             buf_p++;
         }
         if (buf_p >= N) {
             break;
         }
-        int arg_start = buf_p;
+        args[arg_p] = buf + buf_p;
+        arg_p++;
         while (!isWhitespace(buf[buf_p])) {
             buf_p++;
         }
-        int arg_len = buf_p - arg_start + 1;
-        strncpy(args[arg_p], buf + arg_start, arg_len + 1);
-        args[arg_p][arg_len] = '\0';
-        arg_p++;
     }
     args[arg_p] = NULL;
     *args_count = arg_p;
@@ -52,17 +50,9 @@ int parseCmd(char *buf, char **args, int *args_count) {
 }
 
 int execCmd(char **args, int args_count) {
-    int i;
-    for (i = 0; i < args_count; i++) {
-        printf("%s", args[i]);
-    }
     if (!fork()) {
         execvp(args[0], args);
-        /* char *a[] = {"ls", "/", NULL}; */
-        /* execvp("ls", a); */
     } else {
-        wait(NULL);
-        args[args_count] = malloc(MAX_LINE);
     }
     return 0;
 }
