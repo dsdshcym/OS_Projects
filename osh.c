@@ -10,6 +10,15 @@ int isWhitespace(char ch) {
     return strchr(whitespace, ch) != NULL;
 }
 
+int handleAmpersand(char *arg) {
+    int len = strlen(arg);
+    if (arg[len - 1] == '&') {
+        arg[len - 1] = '\0';
+        return 1;
+    }
+    return 0;
+}
+
 int getCmd(char *buf, int buf_size) {
     memset(buf, 0, buf_size);
     gets(buf);
@@ -23,7 +32,7 @@ int getCmd(char *buf, int buf_size) {
     return 0;
 }
 
-int parseCmd(char *buf, char **args, int *args_count) {
+int parseCmd(char *buf, char **args, int *include_ampersand) {
     int N = strlen(buf);
     if (N > MAX_LINE) {
         printf("Input is too long.");
@@ -44,15 +53,22 @@ int parseCmd(char *buf, char **args, int *args_count) {
             buf_p++;
         }
     }
-    args[arg_p] = NULL;
-    *args_count = arg_p;
+    *include_ampersand = handleAmpersand(args[arg_p - 1]);
+    if (strlen(args[arg_p - 1]) == 0) {
+        args[arg_p - 1] = NULL;
+    } else {
+        args[arg_p] = NULL;
+    }
     return 0;
 }
 
-int execCmd(char **args, int args_count) {
+int execCmd(char **args, int include_ampersand) {
     if (!fork()) {
         execvp(args[0], args);
     } else {
+        if (!include_ampersand) {
+            wait(NULL);
+        }
     }
     return 0;
 }
@@ -63,7 +79,7 @@ int main(void) {
     int should_run = 1; /* flag to determine when to exit program */
 
     int i = 0;
-    int args_count = 0;
+    int include_ampersand = 0;
     for (i = 0; i < (MAX_LINE/2 + 1); i++) {
         args[i] = malloc(MAX_LINE);
     }
@@ -79,8 +95,8 @@ int main(void) {
         if (getCmd(buf, sizeof(buf)) < 0) {
             return 0;
         }
-        parseCmd(buf, args, &args_count);
-        execCmd(args, args_count);
+        parseCmd(buf, args, &include_ampersand);
+        execCmd(args, include_ampersand);
     }
     return 0;
 }
