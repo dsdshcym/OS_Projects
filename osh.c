@@ -3,11 +3,18 @@
 #include <unistd.h>
 #include <string.h>
 #define MAX_LINE 80 /* The maximum length command */
+#define HISTORY_LIMIT 10 /* The maximum history length */
 
 // Parsed command representation
-#define EXEC 1
-#define EXIT 2
-#define CDIR 3
+#define EXEC    1
+#define EXIT    2
+#define CDIR    3
+#define HISTORY 4
+
+struct history {
+    int count;
+    char bufs[HISTORY_LIMIT][MAX_LINE];
+};
 
 struct cmd {
     int type;
@@ -47,6 +54,24 @@ int handleAmpersand(char *arg) {
     return 0;
 }
 
+int printHistory(struct history *his) {
+    if (his->count == 0) {
+        printf("No commands in history.\n");
+        return 1;
+    }
+    int i;
+    int head;
+    if (his->count >= HISTORY_LIMIT) {
+        head = his->count - HISTORY_LIMIT;
+    } else {
+        head = 0;
+    }
+    for (i = his->count - 1; i >= head; i--) {
+        printf("%d %s\n", i + 1, his->bufs[i % HISTORY_LIMIT]);
+    }
+    return 0;
+}
+
 int getCmd(char *buf, int buf_size) {
     memset(buf, 0, buf_size);
     gets(buf);
@@ -57,6 +82,12 @@ int getCmd(char *buf, int buf_size) {
         perror("getCmd");
         return -1;
     }
+    return 0;
+}
+
+int saveCmd(char *buf, struct history *his) {
+    strcpy(his->bufs[(his->count) % HISTORY_LIMIT], buf);
+    his->count = his->count + 1;
     return 0;
 }
 
@@ -95,10 +126,13 @@ struct cmd* parseCmd(char *buf) {
     if (strcmp(execCmd->args[0], "cd") == 0) {
         execCmd->type = CDIR;
     }
+    if (strcmp(execCmd->args[0], "history") == 0) {
+        execCmd->type = HISTORY;
+    }
     return (struct cmd*)execCmd;
 }
 
-int runCmd(struct cmd* cmd, int *should_run) {
+int runCmd(struct cmd* cmd, int *should_run, struct history *his) {
     struct execCmd* execCmd;
     struct cdirCmd* cdirCmd;
 
@@ -120,12 +154,18 @@ int runCmd(struct cmd* cmd, int *should_run) {
         cdirCmd = (struct cdirCmd*)cmd;
         chdir(cdirCmd->args[1]);
         break;
+    case HISTORY:
+        his->count--;
+        printHistory(his);
+        break;
     }
     return 0;
 }
 
 int main(void) {
     static char buf[MAX_LINE];
+    struct history his;
+    his.count = 0;
     int should_run = 1; /* flag to determine when to exit program */
 
     while (should_run) {
@@ -139,8 +179,9 @@ int main(void) {
         if (getCmd(buf, sizeof(buf)) < 0) {
             return 0;
         }
+        saveCmd(buf, &his);
         struct cmd* cmd = parseCmd(buf);
-        runCmd(cmd, &should_run);
+        runCmd(cmd, &should_run, &his);
     }
     return 0;
 }
