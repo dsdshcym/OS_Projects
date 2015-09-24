@@ -4,16 +4,18 @@
 #include <string.h>
 #define MAX_LINE 80 /* The maximum length command */
 #define HISTORY_LIMIT 10 /* The maximum history length */
+#define HISTORY_CAPACITY 11 /* The maximum history length */
 
 // Parsed command representation
 #define EXEC    1
 #define EXIT    2
 #define CDIR    3
 #define HISTORY 4
+#define EXECHIS 5
 
 struct history {
     int count;
-    char bufs[HISTORY_LIMIT][MAX_LINE];
+    char bufs[HISTORY_CAPACITY][MAX_LINE];
 };
 
 struct cmd {
@@ -39,6 +41,20 @@ struct cdirCmd {
     char *args[MAX_LINE / 2 + 1];
 };
 
+struct execHisCmd {
+    int type;
+    int include_ampersand;
+    char *args[MAX_LINE / 2 + 1];
+};
+
+char* getHistory(struct history *his, int index);
+int printHistory(struct history *his);
+int execHistory(struct execHisCmd *execHisCmd, struct history *his, int *should_run);
+int getCmd(char *buf, int buf_size);
+int saveCmd(char *buf, struct history *his);
+struct cmd* parseCmd(char *buf);
+int runCmd(struct cmd* cmd, int *should_run, struct history *his);
+
 char whitespace[] = " \t\r\n\v";
 
 int isWhitespace(char ch) {
@@ -55,10 +71,10 @@ int handleAmpersand(char *arg) {
 }
 
 char* getHistory(struct history *his, int index) {
-    if ((index > his->count) || (index < his->count - HISTORY_LIMIT) || (index < 0)) {
+    if ((index > his->count) || (index <= his->count - HISTORY_LIMIT) || (index <= 0)) {
         return 0;
     }
-    return his->bufs[index % HISTORY_LIMIT];
+    return his->bufs[(index - 1) % HISTORY_CAPACITY];
 }
 
 int printHistory(struct history *his) {
@@ -67,11 +83,43 @@ int printHistory(struct history *his) {
         return 1;
     }
     int i;
-    for (i = his->count - 1; i >= his->count - HISTORY_LIMIT; i--) {
+    for (i = his->count; i > his->count - HISTORY_LIMIT; i--) {
         char* buf = getHistory(his, i);
         if (buf) {
-            printf("%d %s\n", i + 1, buf);
+            printf("%d %s\n", i, buf);
         }
+    }
+    return 0;
+}
+
+int execHistory(struct execHisCmd *execHisCmd, struct history *his, int *should_run) {
+    int len = strlen(execHisCmd->args[0]);
+    if (len == 0) {
+        printf("Syntex error.\n");
+        return 1;
+    }
+    int cmd_index = -1;
+    int is_bang = execHisCmd->args[0][0] == '!';
+    if (is_bang) {
+        if (len > 1) {
+            printf("Syntex error.\n");
+            return 1;
+        }
+        cmd_index = his->count;
+    } else {
+        cmd_index = atoi(execHisCmd->args[0]);
+    }
+    char *buf = getHistory(his, cmd_index);
+    if (buf) {
+        printf("%s\n", buf);
+        char *new_buf = malloc(sizeof(*buf));
+        strcpy(new_buf, buf);
+        saveCmd(new_buf, his);
+        runCmd(parseCmd(new_buf), should_run, his);
+    }
+    else {
+        printf("No commands in history.\n");
+        return 2;
     }
     return 0;
 }
@@ -90,7 +138,7 @@ int getCmd(char *buf, int buf_size) {
 }
 
 int saveCmd(char *buf, struct history *his) {
-    strcpy(his->bufs[(his->count) % HISTORY_LIMIT], buf);
+    strcpy(his->bufs[(his->count) % HISTORY_CAPACITY], buf);
     his->count = his->count + 1;
     return 0;
 }
@@ -133,6 +181,10 @@ struct cmd* parseCmd(char *buf) {
     if (strcmp(execCmd->args[0], "history") == 0) {
         execCmd->type = HISTORY;
     }
+    if (execCmd->args[0][0] == '!') {
+        execCmd->type = EXECHIS;
+        execCmd->args[0]++;
+    }
     return (struct cmd*)execCmd;
 }
 
@@ -161,6 +213,10 @@ int runCmd(struct cmd* cmd, int *should_run, struct history *his) {
     case HISTORY:
         his->count--;
         printHistory(his);
+        break;
+    case EXECHIS:
+        his->count--;
+        execHistory((struct execHisCmd*)cmd, his, should_run);
         break;
     }
     return 0;
