@@ -78,11 +78,7 @@ int main(void) {
     static char buf[MAX_LINE];
     int should_run = 1; /* flag to determine when to exit program */
 
-    int i = 0;
     int include_ampersand = 0;
-    for (i = 0; i < (MAX_LINE/2 + 1); i++) {
-        args[i] = malloc(MAX_LINE);
-    }
 
     while (should_run) {
         printf("osh>");
