@@ -195,9 +195,16 @@ int runCmd(struct cmd* cmd, int *should_run, struct history *his) {
     switch (cmd->type) {
     case EXEC:
         execCmd = (struct execCmd*)cmd;
-        if (!fork()) {
-            execvp(execCmd->args[0], execCmd->args);
-        } else {
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("fork");
+        }
+        if (pid == 0) {
+            if (execvp(execCmd->args[0], execCmd->args) == -1) {
+                perror("execvp");
+            };
+        }
+        if (pid > 0) {
             if (!execCmd->include_ampersand) {
                 wait(NULL);
             }
@@ -208,7 +215,9 @@ int runCmd(struct cmd* cmd, int *should_run, struct history *his) {
         break;
     case CDIR:
         cdirCmd = (struct cdirCmd*)cmd;
-        chdir(cdirCmd->args[1]);
+        if (chdir(cdirCmd->args[1]) < 0) {
+            perror("cd");
+        };
         break;
     case HISTORY:
         his->count--;
