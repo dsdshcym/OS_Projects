@@ -54,20 +54,24 @@ int handleAmpersand(char *arg) {
     return 0;
 }
 
+char* getHistory(struct history *his, int index) {
+    if ((index > his->count) || (index < his->count - HISTORY_LIMIT) || (index < 0)) {
+        return 0;
+    }
+    return his->bufs[index % HISTORY_LIMIT];
+}
+
 int printHistory(struct history *his) {
     if (his->count == 0) {
         printf("No commands in history.\n");
         return 1;
     }
     int i;
-    int head;
-    if (his->count >= HISTORY_LIMIT) {
-        head = his->count - HISTORY_LIMIT;
-    } else {
-        head = 0;
-    }
-    for (i = his->count - 1; i >= head; i--) {
-        printf("%d %s\n", i + 1, his->bufs[i % HISTORY_LIMIT]);
+    for (i = his->count - 1; i >= his->count - HISTORY_LIMIT; i--) {
+        char* buf = getHistory(his, i);
+        if (buf) {
+            printf("%d %s\n", i + 1, buf);
+        }
     }
     return 0;
 }
