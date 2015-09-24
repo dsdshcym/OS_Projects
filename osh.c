@@ -4,6 +4,34 @@
 #include <string.h>
 #define MAX_LINE 80 /* The maximum length command */
 
+// Parsed command representation
+#define EXEC 1
+#define EXIT 2
+#define CDIR 3
+
+struct cmd {
+    int type;
+    int include_ampersand;
+};
+
+struct execCmd {
+    int type;
+    int include_ampersand;
+    char *args[MAX_LINE / 2 + 1];
+};
+
+struct exitCmd {
+    int type;
+    int include_ampersand;
+    char *args[MAX_LINE / 2 + 1];
+};
+
+struct cdirCmd {
+    int type;
+    int include_ampersand;
+    char *args[MAX_LINE / 2 + 1];
+};
+
 char whitespace[] = " \t\r\n\v";
 
 int isWhitespace(char ch) {
