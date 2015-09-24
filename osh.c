@@ -60,11 +60,13 @@ int getCmd(char *buf, int buf_size) {
     return 0;
 }
 
-int parseCmd(char *buf, char **args, int *include_ampersand) {
+struct cmd* parseCmd(char *buf) {
     int N = strlen(buf);
     if (N > MAX_LINE) {
         printf("Input is too long.");
     }
+    struct execCmd *execCmd = malloc(sizeof(struct execCmd));
+    execCmd->type = EXEC;
     int buf_p = 0;
     int arg_p = 0;
     while (buf_p < N) {
@@ -75,38 +77,56 @@ int parseCmd(char *buf, char **args, int *include_ampersand) {
         if (buf_p >= N) {
             break;
         }
-        args[arg_p] = buf + buf_p;
+        execCmd->args[arg_p] = buf + buf_p;
         arg_p++;
         while (!isWhitespace(buf[buf_p])) {
             buf_p++;
         }
     }
-    *include_ampersand = handleAmpersand(args[arg_p - 1]);
-    if (strlen(args[arg_p - 1]) == 0) {
-        args[arg_p - 1] = NULL;
+    execCmd->include_ampersand = handleAmpersand(execCmd->args[arg_p - 1]);
+    if (strlen(execCmd->args[arg_p - 1]) == 0) {
+        execCmd->args[arg_p - 1] = NULL;
     } else {
-        args[arg_p] = NULL;
+        execCmd->args[arg_p] = NULL;
     }
-    return 0;
+    if (strcmp(execCmd->args[0], "exit") == 0) {
+        execCmd->type = EXIT;
+    }
+    if (strcmp(execCmd->args[0], "cd") == 0) {
+        execCmd->type = CDIR;
+    }
+    return (struct cmd*)execCmd;
 }
 
-int execCmd(char **args, int include_ampersand) {
-    if (!fork()) {
-        execvp(args[0], args);
-    } else {
-        if (!include_ampersand) {
-            wait(NULL);
+int runCmd(struct cmd* cmd, int *should_run) {
+    struct execCmd* execCmd;
+    struct cdirCmd* cdirCmd;
+
+    switch (cmd->type) {
+    case EXEC:
+        execCmd = (struct execCmd*)cmd;
+        if (!fork()) {
+            execvp(execCmd->args[0], execCmd->args);
+        } else {
+            if (!execCmd->include_ampersand) {
+                wait(NULL);
+            }
         }
+        break;
+    case EXIT:
+        *should_run = 0;
+        break;
+    case CDIR:
+        cdirCmd = (struct cdirCmd*)cmd;
+        chdir(cdirCmd->args[1]);
+        break;
     }
     return 0;
 }
 
 int main(void) {
-    char *args[MAX_LINE/2 + 1]; /* command line arguments */
     static char buf[MAX_LINE];
     int should_run = 1; /* flag to determine when to exit program */
-
-    int include_ampersand = 0;
 
     while (should_run) {
         printf("osh>");
@@ -119,8 +139,8 @@ int main(void) {
         if (getCmd(buf, sizeof(buf)) < 0) {
             return 0;
         }
-        parseCmd(buf, args, &include_ampersand);
-        execCmd(args, include_ampersand);
+        struct cmd* cmd = parseCmd(buf);
+        runCmd(cmd, &should_run);
     }
     return 0;
 }
