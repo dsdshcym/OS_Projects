@@ -134,6 +134,18 @@ I have to admit that I didn't use the most power of polymorphism in this
 project. As you can see, these types are almost the same. But it's convenient
 for us to add some more complicated commands such as pipeline commands if we
 make some prepare for them.
+
+And I added one more struct for history queue.
+
+- =history=, it stores the current history's index (using =count=), and a array
+  of input commands so that user can call them using history commands.
+
+  #+BEGIN_SRC c
+    struct history {
+        int count;
+        char bufs[HISTORY_CAPACITY][MAX_LINE];
+    };
+  #+END_SRC
 * Footnotes
 
 [fn:1] Galvin P B, Gagne G, Silberschatz A. Operating system concepts[M]. John Wiley & Sons, Inc., 2013.
