@@ -62,6 +62,78 @@ for sure.
        !! # Execute the last command
        !N # Execute the Nth command
      #+END_SRC
+* Basic Design
+I thought the later two kinds of shell are beyond my personal ability. Since
+they all needs some kind of syntax analysis knowledge. So I decided to just
+implement Part 1 and 2 with some enhancements.
+** Type Definitions
+As we all know, C language is not a Object-Oriented Programming Language. But we
+can still use =struct= to get some features, such as inheritance and
+polymorphism. I learned this from the shell implement in xv6.
+
+So I made several structs for commands from the very first time.
+
+1. =cmd=, the basic struct which contains command type and a boolean variable
+   indicates whether this command includes a '&' character.
+
+   #+BEGIN_SRC c
+     struct cmd {
+         int type;
+         int include_ampersand;
+     };
+   #+END_SRC
+
+2. =execCmd=, the most common command. Such as =mkdir=, =mv=, =cp= and etc.
+   Which we can directly call =execvp= to execute this command.
+
+   #+BEGIN_SRC c
+     struct execCmd {
+         int type;
+         int include_ampersand;
+         char *args[MAX_LINE / 2 + 1];
+     };
+   #+END_SRC
+
+3. =exitCmd=, this command type is for a specific command named =exit=, which
+   will set the =should_run= variable to 0 and thus cause the osh program exit.
+
+   #+BEGIN_SRC c
+     struct exitCmd {
+         int type;
+         int include_ampersand;
+         char *args[MAX_LINE / 2 + 1];
+     };
+   #+END_SRC
+
+4. =cdirCmd=, this command type is for a specific command named =cd=, which will
+   change the working directory of the current osh progress. If we create a
+   child thread and change the working directory in the child progress, it will
+   not affect the parent thread. So we need to make =cd= a built-in command of
+   the osh.
+
+   #+BEGIN_SRC c
+     struct cdirCmd {
+         int type;
+         int include_ampersand;
+         char *args[MAX_LINE / 2 + 1];
+     };
+   #+END_SRC
+
+5. =execHisCmd=, this command type is for commands related to command history.
+   Such as =history=, =!!= and =!N=.
+
+   #+BEGIN_SRC c
+     struct execHisCmd {
+         int type;
+         int include_ampersand;
+         char *args[MAX_LINE / 2 + 1];
+     };
+   #+END_SRC
+
+I have to admit that I didn't use the most power of polymorphism in this
+project. As you can see, these types are almost the same. But it's convenient
+for us to add some more complicated commands such as pipeline commands if we
+make some prepare for them.
 * Footnotes
 
 [fn:1] Galvin P B, Gagne G, Silberschatz A. Operating system concepts[M]. John Wiley & Sons, Inc., 2013.
