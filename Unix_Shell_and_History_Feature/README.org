@@ -146,6 +146,76 @@ And I added one more struct for history queue.
         char bufs[HISTORY_CAPACITY][MAX_LINE];
     };
   #+END_SRC
+** Functions
+*** Command Functions
+- =getCmd=, this is the input function, which handles user's one line input and
+  save it as a string. Since I added GNU Readline library as the input library
+  after I finished all the basic functions. So I have two different
+  implementation for this function. One is implemented by myself[fn:2], another one
+  uses the readline library[fn:3].
+
+  #+BEGIN_SRC c
+    int getCmd(char **buf);
+  #+END_SRC
+
+- =saveCmd=, this function saves the input string into the history queue.
+
+  #+BEGIN_SRC c
+    int saveCmd(char *buf, struct history *his);
+  #+END_SRC
+
+- =parseCmd=, this function parses the input string and returns a =cmd= pointer
+  which points to a =cmd= contains cmd type and cmd args.
+
+  #+BEGIN_SRC c
+    struct cmd* parseCmd(char *buf);
+  #+END_SRC
+
+- =runCmd=, this function runs the command according to the cmd type.
+
+  #+BEGIN_SRC c
+    int runCmd(struct cmd* cmd, int *should_run, struct history *his);
+  #+END_SRC
+*** History Functions
+- =getHistory=, this function returns the N^{th} commands according to the given
+  =index=. And if the index is out of range, it will return 0.
+
+  #+BEGIN_SRC c
+    char* getHistory(struct history *his, int index);
+  #+END_SRC
+
+- =printHistory=, this function handles the =history= command. It print out the
+  last 10 commands user has used.
+
+  #+BEGIN_SRC c
+    int printHistory(struct history *his);
+  #+END_SRC
+
+- =execHistory=, this function handles the =!N= command and the =!!= command. It
+  will print the N^{th} command (or the last command if the given command is
+  =!!=) and execute it.
+
+  #+BEGIN_SRC c
+    int execHistory(struct execHisCmd *execHisCmd, struct history *his, int *should_run);
+  #+END_SRC
+*** Helper Functions
+These are some helper functions used in =parseCmd=.
+- =isWhitespace=, return 1 if the given char is a whitespace, return true otherwise.
+
+  #+BEGIN_SRC c
+    int isWhitespace(char ch);
+  #+END_SRC
+
+- =handleAmpersand=, return 1 if the given arg is a '=&=' or its last character is
+  a '=&=', and set it to '=\0='. Return 0 otherwise.
+
+  #+BEGIN_SRC c
+    int handleAmpersand(char *arg);
+  #+END_SRC
 * Footnotes
+
+[fn:3] [[https://github.com/dsdshcym/OS_Projects/blob/readline_input/Unix_Shell_and_History_Feature/osh.c#L129-L139][getCmd uses readline library]]
+
+[fn:2] [[https://github.com/dsdshcym/OS_Projects/blob/normal_input/Unix_Shell_and_History_Feature/osh.c#L127-L138][My original getCmd]]
 
 [fn:1] Galvin P B, Gagne G, Silberschatz A. Operating system concepts[M]. John Wiley & Sons, Inc., 2013.
