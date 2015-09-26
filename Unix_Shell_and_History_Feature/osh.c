@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #define MAX_LINE 80 /* The maximum length command */
 #define HISTORY_LIMIT 10 /* The maximum history length */
 #define HISTORY_CAPACITY 11 /* The maximum history length */
@@ -50,7 +52,7 @@ struct execHisCmd {
 char* getHistory(struct history *his, int index);
 int printHistory(struct history *his);
 int execHistory(struct execHisCmd *execHisCmd, struct history *his, int *should_run);
-int getCmd(char *buf, int buf_size);
+int getCmd(char **buf);
 int saveCmd(char *buf, struct history *his);
 struct cmd* parseCmd(char *buf);
 int runCmd(struct cmd* cmd, int *should_run, struct history *his);
@@ -124,16 +126,15 @@ int execHistory(struct execHisCmd *execHisCmd, struct history *his, int *should_
     return 0;
 }
 
-int getCmd(char *buf, int buf_size) {
-    memset(buf, 0, buf_size);
-    gets(buf);
-    if (buf[0] == 0) {
-        return -1;
+int getCmd(char **buf) {
+    char* input, shell_prompt[100];
+    snprintf(shell_prompt, sizeof(shell_prompt), "%s:%s osh$ ", getenv("USER"), getcwd(NULL, 1024));
+    input = readline(shell_prompt);
+    if (!input) {
+        exit(0);
     }
-    if (strlen(buf) > MAX_LINE) {
-        perror("getCmd");
-        return -1;
-    }
+    add_history(input);
+    *buf = input;
     return 0;
 }
 
@@ -232,25 +233,23 @@ int runCmd(struct cmd* cmd, int *should_run, struct history *his) {
 }
 
 int main(void) {
-    static char buf[MAX_LINE];
+    char* buf = NULL;
     struct history his;
     his.count = 0;
     int should_run = 1; /* flag to determine when to exit program */
 
     while (should_run) {
-        printf("%s:%s osh$ ", getenv("USER"), getcwd(NULL, 1024));
         fflush(stdout);
         /*
          * After reading user input, the steps are:
          * (1) fork a child process using fork()
          * (2) the child process will invoke execvp()
          * (3) if command included &, parent will invoke wait() */
-        if (getCmd(buf, sizeof(buf)) < 0) {
-            return 0;
-        }
+        getCmd(&buf);
         saveCmd(buf, &his);
         struct cmd* cmd = parseCmd(buf);
         runCmd(cmd, &should_run, &his);
+        free(buf);
     }
     return 0;
 }
