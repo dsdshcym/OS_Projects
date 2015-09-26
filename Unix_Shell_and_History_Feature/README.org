@@ -1,0 +1,64 @@
+#+TITLE: A Simple Shell Implementation
+#+AUTHOR: 陈一鸣
+
+* Abstract
+This is a simple shell implementation. The basic functions are defined in
+/Operating System Concepts Ninth Edition/[fn:1], Chapter 3, Project 1. Which
+means, this shell can execute one single command given by user, can run commands
+in the background and have some basic history methods. And I borrowed some
+concepts from the xv6's shell implementation and added readline library to give
+a more advanced input experience for users.
+* Project Requiements
+In my humble opinion, there are three different kinds of shells baced on what
+kind of commands they can handle.
+
+1. Shells that can execute one single command given by user.
+
+   #+BEGIN_SRC sh
+     ls
+     cd ..
+     mv
+     mkdir
+     ls &
+   #+END_SRC
+
+2. Shells that can execute multiple commands in one line, pipeline commands and etc.
+
+   #+BEGIN_SRC sh
+     ls && cd ..
+     ls & cd ..
+     ls -all | grep
+   #+END_SRC
+
+3. Shells that can execute shell scripts. Such as bash, zsh, fish and etc.
+
+According to the text book, this project only needs us to implement the first
+one and has two parts. And the shell needs some basic error handling functions
+for sure.
+
+- Part 1 ::
+     Use =fork()=, =execvp()= and =wait()= to fork a child progress, execute the
+     command specified by user and determine whether to wait for it by the '&'
+     character.
+- Part 2 ::
+     Add a command named =history=, which can list the command history as the
+     following example showed:
+
+     #+BEGIN_EXAMPLE
+       6 ps
+       5 ls -l
+       4 top
+       3 cal
+       2 who
+       1 date
+     #+END_EXAMPLE
+
+     Support two methods for retrieving commands from the history:
+
+     #+BEGIN_SRC sh
+       !! # Execute the last command
+       !N # Execute the Nth command
+     #+END_SRC
+* Footnotes
+
+[fn:1] Galvin P B, Gagne G, Silberschatz A. Operating system concepts[M]. John Wiley & Sons, Inc., 2013.
