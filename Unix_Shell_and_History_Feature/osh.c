@@ -238,7 +238,7 @@ int main(void) {
     int should_run = 1; /* flag to determine when to exit program */
 
     while (should_run) {
-        printf("osh>");
+        printf("%s:%s osh$ ", getenv("USER"), getcwd(NULL, 1024));
         fflush(stdout);
         /*
          * After reading user input, the steps are:
