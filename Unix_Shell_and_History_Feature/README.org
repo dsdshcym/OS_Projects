@@ -8,6 +8,8 @@ means, this shell can execute one single command given by user, can run commands
 in the background and have some basic history methods. And I borrowed some
 concepts from the xv6's shell implementation and added readline library to give
 a more advanced input experience for users.
+
+You can find this project on my GitHub page[fn:4].
 * Project Requiements
 In my humble opinion, there are three different kinds of shells baced on what
 kind of commands they can handle.
@@ -222,6 +224,8 @@ This Demo shows the error handling of this shell.
 
 [[./gif/demo_2.gif]]
 * Footnotes
+
+[fn:4] [[https://github.com/dsdshcym/OS_Projects/tree/master/Unix_Shell_and_History_Feature][My GitHub]]
 
 [fn:3] [[https://github.com/dsdshcym/OS_Projects/blob/readline_input/Unix_Shell_and_History_Feature/osh.c#L129-L139][getCmd uses readline library]]
 
