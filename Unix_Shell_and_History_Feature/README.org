@@ -212,6 +212,15 @@ These are some helper functions used in =parseCmd=.
   #+BEGIN_SRC c
     int handleAmpersand(char *arg);
   #+END_SRC
+* Demo
+** Demo 1
+This Demo shows the basic functions of this shell.
+
+[[./gif/demo_1.gif]]
+** Demo 2
+This Demo shows the error handling of this shell.
+
+[[./gif/demo_2.gif]]
 * Footnotes
 
 [fn:3] [[https://github.com/dsdshcym/OS_Projects/blob/readline_input/Unix_Shell_and_History_Feature/osh.c#L129-L139][getCmd uses readline library]]
