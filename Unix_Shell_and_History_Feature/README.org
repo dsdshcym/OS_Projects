@@ -20,6 +20,9 @@ kind of commands they can handle.
      mv
      mkdir
      ls &
+     history
+     !!
+     !N
    #+END_SRC
 
 2. Shells that can execute multiple commands in one line, pipeline commands and etc.
